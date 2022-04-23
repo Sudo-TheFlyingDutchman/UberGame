@@ -9,3 +9,6 @@ class Game(BaseModel):
     img: bytes = Field(default=None, repr=False, exclude=True)
     img_type: str = Field(default=None, repr=False, exclude=True)
     resent_playtime: Tuple[int, int] = Field(default=(-1, -1))
+
+    def __hash__(self):
+        return self.name.__hash__() ^ self.playtime.__hash__() ^ self.resent_playtime.__hash__()

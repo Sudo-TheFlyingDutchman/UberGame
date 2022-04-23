@@ -1,5 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 
+from .hover_cover import HoverCover
+
 
 class SteamGameScene(QtWidgets.QGraphicsScene):
     class GamePanel(QtWidgets.QLabel):
@@ -8,13 +10,14 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
 
             self._game = game
             self._scene = scene
+            self._cover = HoverCover(self)
             self._set_game()
 
             self.setMouseTracking(True)
             self.installEventFilter(self)
 
         def __eq__(self, other):
-            return self._game != other.game
+            return self._game != other._game
 
         def _set_game(self):
             if self._game.img:
@@ -30,6 +33,7 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
             if event.type() == QtCore.QEvent.MouseMove:
                 print('hover', self._game.name)
                 self._scene.set_hover(self)
+                self.setPixmap(self._cover)
 
             elif event.type() == QtCore.QEvent.MouseButtonPress:
                 print('click', self._game.name)
@@ -40,7 +44,11 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
             return super().eventFilter(source, event)
 
         def unhover(self):
+            self._set_game()
             print('unhover', self._game.name)
+
+        def __hash__(self):
+            return self._game.__hash__()
 
     class SteamGameGrid(QtWidgets.QGraphicsWidget):
         def __init__(self, scene):
@@ -49,17 +57,19 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
             self._scene = scene
 
             self.setLayout(QtWidgets.QGraphicsGridLayout())
-            self.games_panels = []
+            self.games_panels = set()
 
         def create_game_panels(self, scene, games):
             for col, game_group in enumerate([games[i:i + 4] for i in range(0, len(games), 4)]):
-                self.games_panels.append(list())
 
                 for row, game in enumerate(game_group):
-                    panel = scene.addWidget(SteamGameScene.GamePanel(self._scene, game))
+                    panel = SteamGameScene.GamePanel(self._scene, game)
 
-                    self.games_panels[col].append(panel)
-                    self.layout().addItem(panel, col, row)
+                    self.games_panels.update({panel})
+                    self.layout().addItem(scene.addWidget(panel), col, row)
+
+        def addItem(self, item, col, row):
+            return self.layout().addItem(item, col, row)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -69,19 +79,22 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
 
         self.installEventFilter(self)
         self.addItem(self._layout)
-        self._hovered_game = None
+        self._hovered_games = set()
+
+    def check_hover(self):
+        hovered_games = set(filter(lambda game: bool(game) and game.underMouse(), self._hovered_games))
+        for game in self._hovered_games - hovered_games:
+            game.unhover()
+
+        self._hovered_games = hovered_games
 
     def set_hover(self, game):
-        if self._hovered_game  and not self._hovered_game.underMouse() and game != self._hovered_game:
-            self._hovered_game.unhover()
-
-        self._hovered_game = game
+        self._hovered_games.update({game})
+        self.check_hover()
 
     def eventFilter(self, source, event: QtCore.QEvent):
         if event.type() == QtCore.QEvent.GraphicsSceneMouseMove:
-            if self._hovered_game and not self._hovered_game.underMouse():
-                self._hovered_game.unhover()
-                self._hovered_game = None
+            self.check_hover()
 
         return super().eventFilter(source, event)
 
