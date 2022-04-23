@@ -1,29 +1,4 @@
-from PySide6 import QtWidgets, QtGui, QtCore
-from qasync import asyncSlot
-from functools import partial
-from asyncio import gather
-from random import choice
-
-from . import Window
-
-class LoginPopUp(QtWidgets.QWidget):
-    loggedin = QtCore.Signal(str)
-
-    def __init__(self):
-        super().__init__()
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-
-        line_edit = QtWidgets.QLineEdit()
-        line_edit.setText('https://steamcommunity.com/id/mizvada/')
-        layout.addWidget(line_edit)
-
-        line_edit.returnPressed.connect(partial(self.return_pressed, line_edit))
-
-    @asyncSlot()
-    async def return_pressed(self, line_edit):
-        self.loggedin.emit(line_edit.text())
-        self.close()
+from PySide6 import QtWidgets, QtCore, QtGui
 
 
 class SteamGameScene(QtWidgets.QGraphicsScene):
@@ -112,32 +87,3 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
 
     def add_scene_to_layout(self, layout):
         layout.addWidget(self._view)
-
-
-class SteamWindow(Window):
-    def __init__(self, main_window, handler):
-        super(SteamWindow, self).__init__()
-        self._main_window = main_window
-        self._handler_cls = handler
-
-        self.scene = SteamGameScene(parent=self)
-
-        self.layout = QtWidgets.QHBoxLayout()
-        self.setLayout(self.layout)
-        self.scene.add_scene_to_layout(self.layout)
-
-        self.setMouseTracking(True)
-
-        self.popup = LoginPopUp()
-        self.popup.setGeometry(100, 100, 400, 200)
-        self.popup.loggedin.connect(self._receive_games)
-        self.popup.show()
-
-    @asyncSlot()
-    async def _receive_games(self, text):
-        handler = await self._handler_cls(text)
-        games = await gather(*handler.get_games())
-
-        self.scene.set_games(handler, games)
-
-        self._main_window.setCentralWidget(self)
