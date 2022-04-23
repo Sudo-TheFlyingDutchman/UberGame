@@ -13,6 +13,9 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
             self.setMouseTracking(True)
             self.installEventFilter(self)
 
+        def __eq__(self, other):
+            return self._game != other.game
+
         def _set_game(self):
             if self._game.img:
                 self.pixmap = QtGui.QPixmap.fromImage(QtGui.QImage.fromData(self._game.img, self._game.img_type)).\
@@ -69,7 +72,7 @@ class SteamGameScene(QtWidgets.QGraphicsScene):
         self._hovered_game = None
 
     def set_hover(self, game):
-        if self._hovered_game:
+        if self._hovered_game  and not self._hovered_game.underMouse() and game != self._hovered_game:
             self._hovered_game.unhover()
 
         self._hovered_game = game
