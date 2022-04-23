@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Iterable, Awaitable, Tuple
 from itertools import chain
 
-from game_receivers.game import Game
+from utils.game import Game
 
 
 class GameReceiverHandler(ABC):
