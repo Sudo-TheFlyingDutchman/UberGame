@@ -10,15 +10,6 @@ from .windows import WindowFactory
 class MyWidget(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-
-        # exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
-        # exitAction.setShortcut('Ctrl+Q')
-        # exitAction.setStatusTip('Exit application')
-        # exitAction.triggered.connect(self.close)
-
-        # menubar = self.menuBar()
-        # fileMenu = menubar.addMenu('&File')
-        # fileMenu.addAction(exitAction)
         self.statusBar()
 
         self.create_providers_menubar()
