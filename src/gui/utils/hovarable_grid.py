@@ -74,6 +74,8 @@ class HovarableScene(QtWidgets.QGraphicsScene):
         self._hovered_panel = set()
 
     def add_panel(self, panel: HovarablePanel, col, row):
+        panel.set_default()
+
         self.panels.update([panel])
         self._grid.addItem(self.addWidget(panel), col, row)
 

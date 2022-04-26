@@ -1,14 +1,21 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 
 
-class HoverCover(QtGui.QPixmap):
-    COGWHEEL_ICON = QtGui.QImage("icon\\cogwheel.png")
+def _load_image(name, ext="PNG"):
+    with open(f'.\\icons\\{name}.{ext.lower()}', 'rb') as img:
+        return QtGui.QImage.fromData(img.read(), ext)
 
-    def __init__(self, background_label, parent=None):
-        super(HoverCover, self).__init__()
 
-        self._background_label = background_label
-        self.fromImage(self.get_hover_image())
+class HoverCover(QtGui.QImage):
+    COGWHEEL_ICON = _load_image('cogwheel')
 
-    def get_hover_image(self) -> QtGui.QImage:
-        return self.COGWHEEL_ICON.scaled(self._background_label.size(), QtCore.Qt.KeepAspectRatio)
+    def __init__(self, background_image):
+        super(HoverCover, self).__init__(background_image)
+
+        self._image = self.COGWHEEL_ICON.scaled(self.size() / 2, QtCore.Qt.KeepAspectRatio)
+        self._painter = QtGui.QPainter()
+
+        self._painter.begin(self)
+        self._painter.drawImage(self._image.width() / 2, self._image.height() / 2, self._image)
+        self._painter.setCompositionMode(QtGui.QPainter.CompositionMode_DestinationOver)
+        self._painter.end()
